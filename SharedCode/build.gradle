@@ -1,0 +1,86 @@
+apply plugin: 'kotlin-multiplatform'
+apply plugin: 'com.squareup.sqldelight'
+apply plugin: 'kotlinx-serialization'
+apply plugin: 'kotlinx-atomicfu'
+
+kotlin {
+    targets {
+        final def iOSTarget = System.getenv('SDK_NAME')?.startsWith("iphoneos")   \
+                                ? presets.iosArm64 : presets.iosX64
+
+        fromPreset(iOSTarget, 'iOS') {
+            binaries {
+                framework('SharedCode')
+            }
+        }
+
+        fromPreset(presets.jvm, 'android')
+    }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                api 'org.jetbrains.kotlin:kotlin-stdlib-common'
+                api "com.squareup.sqldelight:runtime:$rootProject.sqldelight_version"
+                implementation "io.ktor:ktor-client-core:$rootProject.ktor_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.coroutines_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$rootProject.serialization_version"
+            }
+        }
+
+        androidMain {
+            dependencies {
+                api 'org.jetbrains.kotlin:kotlin-stdlib'
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.coroutines_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$rootProject.coroutines_version"
+                implementation "io.ktor:ktor-client-android:$rootProject.ktor_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$rootProject.serialization_version"
+            }
+        }
+
+        iOSMain {
+            dependencies {
+                implementation "io.ktor:ktor-client-ios:$rootProject.ktor_version"
+                implementation "com.squareup.sqldelight:ios-driver:$rootProject.sqldelight_version"
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$rootProject.serialization_version"
+            }
+        }
+
+        all {
+            languageSettings.progressiveMode = true
+        }
+    }
+}
+
+sqldelight {
+    Database {
+        packageName = "com.inovex.cpsample.shared"
+    }
+}
+
+// workaround for https://youtrack.jetbrains.com/issue/KT-27170
+configurations {
+    compileClasspath
+}
+// Xcode-specific
+task packForXCode(type: Sync) {
+    final File frameworkDir = new File(buildDir, "xcode-frameworks")
+    final String mode = project.findProperty("XCODE_CONFIGURATION")?.toUpperCase() ?: 'DEBUG'
+    final def framework = kotlin.targets.iOS.binaries.getFramework("SharedCode", mode)
+
+    inputs.property "mode", mode
+    dependsOn framework.linkTask
+
+    from { framework.outputFile.parentFile }
+    into frameworkDir
+
+    doLast {
+        new File(frameworkDir, 'gradlew').with {
+            text = "#!/bin/bash\nexport 'JAVA_HOME=${System.getProperty("java.home")}'\ncd '${rootProject.rootDir}'\n./gradlew \$@\n"
+            setExecutable(true)
+        }
+    }
+}
+tasks.build.dependsOn packForXCode
+dependencies {
+}

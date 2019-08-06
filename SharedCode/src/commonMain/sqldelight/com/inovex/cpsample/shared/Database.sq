@@ -1,0 +1,17 @@
+CREATE TABLE todo(
+                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                     title TEXT NOT NULL,
+                     completed INTEGER
+                     );
+
+
+                 selectAll:
+                 SELECT *
+                 FROM todo;
+
+                 insert:
+                 INSERT INTO todo(title, completed)
+                 VALUES (?, ?);
+
+                 deleteAll:
+                 DELETE FROM todo;
