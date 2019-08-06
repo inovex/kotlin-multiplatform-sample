@@ -2,7 +2,7 @@
 
 A minimal example app for Android and iOS, based on the MVVM pattern and using Kotlin Multiplatform.
 
-For more information, see blog post.
+For more information, see blog post: [https://www.inovex.de/blog/kotlin-multiplatform-for-clean-architecture/](https://www.inovex.de/blog/kotlin-multiplatform-for-clean-architecture/)
 
 ### Android
 
