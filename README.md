@@ -1,4 +1,4 @@
-# Clean Architecutre With Kotlin Multiplatform Example
+# Clean Architecture With Kotlin Multiplatform Example
 
 A minimal example app for Android and iOS, based on the MVVM pattern and using Kotlin Multiplatform.
 
